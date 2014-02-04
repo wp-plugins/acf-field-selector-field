@@ -1,0 +1,191 @@
+.acffs-option-group-label {
+	font-weight:700;
+	display:block;
+	margin:0 0 5px 0;
+	font-size:11px;
+}
+
+.acffs-option-group-list > li{
+	margin:22px 0 0 0;
+}
+
+.acffs-option-group-list > li:first-child {
+	margin:0px;
+}
+
+
+
+
+.acffs-autocomplete-container {
+	position: relative;
+	overflow: hidden;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-left {
+	width: 50%;
+	float: left;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-right {
+	width: 50%;
+	float: left;
+}
+
+.acffs-autocomplete-container .custom_field_selector_label {
+	font-size: 12px;
+	font-family: sans-serif;
+	color: #999;
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 10px;
+}
+
+.acffs-autocomplete-container .widefat {
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.acffs-autocomplete-container .widefat th {
+	border-bottom: 0 none;
+}
+
+
+.acffs-autocomplete-container .custom_field_selector_search {
+	margin: 0;
+	font-size: 12px;
+	line-height: 13px;
+	border-radius: 13px;
+	font-family: sans-serif;
+	padding: 5px 9px !important;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list {
+	background: #fff;
+	position: relative;
+	overflow: auto;
+	height: 150px;
+	border: #DFDFDF solid 1px;
+	border-top-width: 0;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li.hide {
+	background: #f8f8f8;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li.hide a {
+	cursor: default;
+	color: #21759B !important;
+	opacity: 0.5;
+	background: transparent !important;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li {
+	border-bottom: #f8f8f8 solid 1px;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li a {
+	display: block;
+	position: relative;
+	padding: 7px 9px;
+	text-decoration: none;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li a .custom_field_selector-item-info {
+	color: #CCC;
+	text-transform: uppercase;
+	float: right;
+	font-size: 11px;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li:hover a .custom_field_selector-item-info {
+	padding-right: 24px;
+	color: #999;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li.hide:hover a .custom_field_selector-item-info {
+	padding-right: 0;
+	color: #CCC;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li a:hover,
+.acffs-autocomplete-container .acffs-autocomplete-list li a:focus {
+	background: #eaf2fa;
+	color: #000;
+	box-shadow: #d6e1ec 0 0 0 1px;
+}
+
+.acffs-autocomplete-container .custom_field_selector_right .acffs-autocomplete-list {
+	margin-left: 10px;
+	height: 193px;
+	min-height: 193px;
+	border-top-width:1px;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li a .acf-button-add,
+.acffs-autocomplete-container .acffs-autocomplete-list li a .acf-button-remove {
+	position: absolute;
+	top: 15px;
+	right: 5px;
+	display: none;
+
+	cursor: pointer;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li a:hover .acf-button-add,
+.acffs-autocomplete-container .acffs-autocomplete-list li a:hover .acf-button-remove {
+	display: block;
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list li.hide a:hover .acf-button-add {
+	display: none;
+}
+
+
+.acffs-autocomplete-container .acffs-autocomplete-list a {
+overflow: hidden;
+}
+.acffs-autocomplete-container .acffs-autocomplete-list a .additional-data {
+	color:#aaa;
+	text-transform: uppercase;
+	font-size:9px;
+	margin-right:22px;
+	display:block;
+}
+
+
+.acffs-autocomplete-container .custom_field_selector_right .acffs-autocomplete-list li a {
+	cursor: move;
+}
+
+.acffs-autocomplete-container .load-more .acf-loading {
+	padding: 0;
+	box-shadow: none;
+	background-color: transparent;
+}
+
+.acffs-autocomplete-container.no-results .load-more {
+	display: none;
+}
+
+
+.acffs-autocomplete-container select {
+	font-family: sans-serif;
+	font-size: 12px;
+
+}
+
+.acffs-autocomplete-container .widefat tr + tr th {
+	border-radius: 0;
+	border-top: #DFDFDF solid 1px;
+	background: #F3F3F3;
+
+}
+
+.acffs-autocomplete-container .acffs-autocomplete-list .result-thumbnail {
+	width:21px;
+	height:21px;
+	background:#F9F9F9;
+	border:#E1E1E1 solid 1px;
+	float:left;
+	margin:-3px 5px 0 0;
+}
