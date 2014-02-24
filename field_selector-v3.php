@@ -359,7 +359,7 @@ class acf_field_field_selector extends acf_Field
 					foreach( $fields_by_group as $name => $group ) {
 						echo '<optgroup label="' . $name . '">';
 						foreach( $group as $item ) {
-							echo '<option value="' . $item['key'] . '">' . $item['label'] . '</value>';
+							echo '<option ' . selected( $field['value'], $item['key'] , false ) . ' value="' . $item['key'] . '">' . $item['label'] . '</value>';
 						}
 						echo '</optgroup>';
 					}
@@ -370,7 +370,7 @@ class acf_field_field_selector extends acf_Field
 					foreach( $fields_by_group as $name => $group ) {
 						echo '<li><span class="acffs-option-group-label">' . $name . '</span><ul>';
 						foreach( $group as $item ) {
-							echo '<li><label><input type="radio" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
+							echo '<li><label><input ' . checked( $field['value'], $item['key'] , false ) . ' type="radio" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
 						}
 						echo '</ul></li>';
 					}
@@ -381,7 +381,7 @@ class acf_field_field_selector extends acf_Field
 					foreach( $fields_by_group as $name => $group ) {
 						echo '<li><span class="acffs-option-group-label">' . $name . '</span><ul>';
 						foreach( $group as $item ) {
-							echo '<li><label><input type="checkbox" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
+							echo '<li><label><input ' . checked( $field['value'], $item['key'] , false ) . ' type="checkbox" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
 						}
 						echo '</ul></li>';
 					}
