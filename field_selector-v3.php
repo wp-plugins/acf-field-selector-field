@@ -203,6 +203,7 @@ class acf_field_field_selector extends acf_Field
 					'value'	=>	$field['return_value'],
 					'choices' => array(
 						'key' => __( 'Field Key', 'acf' ),
+						'name' => __( 'Field Name', 'acf' ),
 						'object' => __( 'Field Object', 'acf' ),
 					)
 				));
@@ -528,6 +529,14 @@ class acf_field_field_selector extends acf_Field
 				$value[$key] = get_field_object( $item );
 			}
 		}
+
+		if( $field['return_value'] == 'name' ) {
+			foreach( $value as $key => $item ) {
+				$field_object = get_field_object( $item );
+				$value[$key] = $field_object['name'];
+			}
+		}
+		
 
 		return $value;
 
