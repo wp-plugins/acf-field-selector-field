@@ -524,16 +524,19 @@ class acf_field_field_selector extends acf_Field
 
 	function get_value_for_api($post_id, $field)
 	{
-		if( $field['return_value'] == 'object' ) {
-			foreach( $value as $key => $item ) {
-				$value[$key] = get_field_object( $item );
+		$value = get_field( $field['key'], $post_id  );
+		if( !empty( $value ) ) {
+			if( $field['return_value'] == 'object' ) {
+				foreach( $value as $key => $item ) {
+					$value[$key] = get_field_object( $item );
+				}
 			}
-		}
 
-		if( $field['return_value'] == 'name' ) {
-			foreach( $value as $key => $item ) {
-				$field_object = get_field_object( $item );
-				$value[$key] = $field_object['name'];
+			if( $field['return_value'] == 'name' ) {
+				foreach( $value as $key => $item ) {
+					$field_object = get_field_object( $item );
+					$value[$key] = $field_object['name'];
+				}
 			}
 		}
 		

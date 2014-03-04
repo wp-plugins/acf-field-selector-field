@@ -456,16 +456,18 @@ class acf_field_field_selector extends acf_field
 
 	function format_value_for_api($value, $post_id, $field)
 	{
-		if( $field['return_value'] == 'object' ) {
-			foreach( $value as $key => $item ) {
-				$value[$key] = get_field_object( $item );
+		if( !empty( $value ) ) {
+			if( $field['return_value'] == 'object' ) {
+				foreach( $value as $key => $item ) {
+					$value[$key] = get_field_object( $item );
+				}
 			}
-		}
 
-		if( $field['return_value'] == 'name' ) {
-			foreach( $value as $key => $item ) {
-				$field_object = get_field_object( $item );
-				$value[$key] = $field_object['name'];
+			if( $field['return_value'] == 'name' ) {
+				foreach( $value as $key => $item ) {
+					$field_object = get_field_object( $item );
+					$value[$key] = $field_object['name'];
+				}
 			}
 		}
 
