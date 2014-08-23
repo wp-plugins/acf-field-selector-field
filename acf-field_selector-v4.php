@@ -1,38 +1,30 @@
 <?php
 
-class acf_field_field_selector extends acf_Field
+class acf_field_field_selector extends acf_field
 {
-
-	// vars
 	var $settings,
 		$defaults;
 
 
-	/*--------------------------------------------------------------------------------------
+	/*
+	*  __construct
 	*
-	*	Constructor
-	*	- This function is called when the field class is initalized on each page.
-	*	- Here you can add filters / actions and setup any other functionality for your field
+	*  Set name / label needed for actions / filters
 	*
-	*	@author Elliot Condon
-	*	@since 2.2.0
-	*
-	*-------------------------------------------------------------------------------------*/
+	*  @since	3.6
+	*  @date	23/01/13
+	*/
 
-	function __construct($parent)
+	function __construct()
 	{
-
-		// do not delete!
-		parent::__construct($parent);
-
 		// vars
 		$this->name = 'field_selector';
 		$this->label = __('Field Selector', 'acf');
 		$this->category = __("Relational",'acf'); // Basic, Content, Choice, etc
 		$this->defaults = array(
-			'allowed_groups'     => '',
-			'allowed_types'      => '',
-			'exclude_types'      => '',
+			'allowed_groups'     => array(),
+			'allowed_types'      => array(),
+			'exclude_types'      => array(),
 			'max'                => '',
 			'return_value'       => 'key',
 			'field_type'         => 'autocomplete',
@@ -61,7 +53,7 @@ class acf_field_field_selector extends acf_Field
 			'version' => '1.0.0'
 		);
 
-  }
+	}
 
 
 	/*
@@ -81,80 +73,20 @@ class acf_field_field_selector extends acf_Field
 		return $groups;
 	}
 
-
-
- 	/*
-  *  helpers_get_path
-  *
-  *  @description: calculates the path (works for plugin / theme folders)
-  *  @since: 3.6
-  *  @created: 30/01/13
-  */
-
-  function helpers_get_path($file)
-  {
-    return trailingslashit(dirname($file));
-  }
-
-
-  /*
-  *  helpers_get_dir
-  *
-  *  @description: calculates the directory (works for plugin / theme folders)
-  *  @since: 3.6
-  *  @created: 30/01/13
-  */
-
-  function helpers_get_dir($file)
-  {
-    $dir = trailingslashit(dirname($file));
-    $count = 0;
-
-
-    // sanitize for Win32 installs
-    $dir = str_replace('\\', '/', $dir);
-
-
-    // if file is in plugins folder
-    $wp_plugin_dir = str_replace('\\', '/', WP_PLUGIN_DIR);
-    $dir = str_replace($wp_plugin_dir, WP_PLUGIN_URL, $dir, $count);
-
-
-    if($count < 1)
-    {
-      // if file is in wp-content folder
-      $wp_content_dir = str_replace('\\', '/', WP_CONTENT_DIR);
-      $dir = str_replace($wp_content_dir, WP_CONTENT_URL, $dir, $count);
-    }
-
-
-    if($count < 1)
-    {
-      // if file is in ??? folder
-      $wp_dir = str_replace('\\', '/', ABSPATH);
-      $dir = str_replace($wp_dir, site_url('/'), $dir);
-    }
-
-    return $dir;
-  }
-
-
-	/*--------------------------------------------------------------------------------------
+	/*
+	*  create_options()
 	*
-	*	create_options
-	*	- this function is called from core/field_meta_box.php to create extra options
-	*	for your field
+	*  Create extra options for your field. This is rendered when editing a field.
+	*  The value of $field['name'] can be used (like bellow) to save extra data to the $field
 	*
-	*	@params
-	*	- $key (int) - the $_POST obejct key required to save the options to the field
-	*	- $field (array) - the field object
+	*  @type	action
+	*  @since	3.6
+	*  @date	23/01/13
 	*
-	*	@author Elliot Condon
-	*	@since 2.2.0
-	*
-	*-------------------------------------------------------------------------------------*/
+	*  @param	$field	- an array holding all the field's data
+	*/
 
-	function create_options($key, $field)
+	function create_options($field)
 	{
 		$field = array_merge($this->defaults, $field);
 		$key = $field['name'];
@@ -279,21 +211,23 @@ class acf_field_field_selector extends acf_Field
 			</td>
 		</tr>
 		<?php
+
 	}
 
 
+	/*
+	*  create_field()
+	*
+	*  Create the HTML interface for your field
+	*
+	*  @param	$field - an array holding all the field's data
+	*
+	*  @type	action
+	*  @since	3.6
+	*  @date	23/01/13
+	*/
 
-	/*--------------------------------------------------------------------------------------
-	*
-	*	create_field
-	*	- this function is called on edit screens to produce the html for this field
-	*
-	*	@author Elliot Condon
-	*	@since 2.2.0
-	*
-	*-------------------------------------------------------------------------------------*/
-
-	function create_field($field)
+	function create_field( $field )
 	{
 		$args = array(
 			'post_type' => 'acf',
@@ -352,7 +286,6 @@ class acf_field_field_selector extends acf_Field
 				$fields_by_key[$data['field']['key']]['group'] = $data['group'];
 			}
 
-
 			switch ( $field['field_type'] ) {
 				case 'select' :
 				case 'multi_select' :
@@ -360,7 +293,7 @@ class acf_field_field_selector extends acf_Field
 					foreach( $fields_by_group as $name => $group ) {
 						echo '<optgroup label="' . $name . '">';
 						foreach( $group as $item ) {
-							echo '<option ' . selected( $field['value'], $item['key'] , false ) . ' value="' . $item['key'] . '">' . $item['label'] . '</value>';
+							echo '<option ' . selected( $field['value'][0], $item['key'] , false ) . ' value="' . $item['key'] . '">' . $item['label'] . '</value>';
 						}
 						echo '</optgroup>';
 					}
@@ -416,7 +349,7 @@ class acf_field_field_selector extends acf_Field
 						<?php
 							if( !empty( $fields ) ) :
 								foreach( $fields as $customfield ) :
-								$hidden = ( in_array( $customfield['field']['key'], $field['value'] ) ) ? 'class="hide"' : '';
+								$hidden = ( !empty( $field['value'] ) && is_array( $field['value'] ) && in_array( $customfield['field']['key'], $field['value'] ) ) ? 'class="hide"' : '';
 							?>
 						<li <?php echo $hidden ?>>
 							<a href="#" data-name="<?php echo $customfield['field']['label'] ?> <?php echo $customfield['group'] ?>" data-value="<?php echo $customfield['field']['key'] ?>"><?php echo $customfield['field']['label'] ?> <span class='additional-data'><?php echo $customfield['group'] ?></span> <span class="acf-button-add"></span></a>
@@ -431,7 +364,7 @@ class acf_field_field_selector extends acf_Field
 				<div class="acffs-autocomplete-right">
 					<ul class="bl acffs-autocomplete-list">
 					<?php
-					if( !empty( $field['value'] ) )
+					if( !empty( $field['value'] ) && is_array( $field['value'] ) )
 					{
 						foreach( $field['value'] as $value )
 						{
@@ -469,22 +402,26 @@ class acf_field_field_selector extends acf_Field
 	}
 
 
-	/*--------------------------------------------------------------------------------------
+	/*
+	*  input_admin_enqueue_scripts()
 	*
-	*	admin_print_scripts / admin_print_styles
-	*	- this function is called in the admin_print_scripts / admin_print_styles where
-	*	your field is created. Use this function to register css and javascript to assist
-	*	your create_field() function.
+	*  This action is called in the admin_enqueue_scripts action on the edit screen where your field is created.
+	*  Use this action to add css + javascript to assist your create_field() action.
 	*
-	*	@author Elliot Condon
-	*	@since 3.0.0
-	*
-	*-------------------------------------------------------------------------------------*/
+	*  $info	http://codex.wordpress.org/Plugin_API/Action_Reference/admin_enqueue_scripts
+	*  @type	action
+	*  @since	3.6
+	*  @date	23/01/13
+	*/
 
-	function admin_print_scripts()
+	function input_admin_enqueue_scripts()
 	{
+		// Note: This function can be removed if not used
+
+
 		// register acf scripts
 		wp_register_script('acf-input-field_selector', $this->settings['dir'] . 'js/input.js', array('acf-input'), $this->settings['version']);
+		wp_register_style('acf-input-field_selector', $this->settings['dir'] . 'css/input.css', array('acf-input'), $this->settings['version']);
 
 
 		// scripts
@@ -492,12 +429,6 @@ class acf_field_field_selector extends acf_Field
 			'acf-input-field_selector',
 		));
 
-	}
-
-	function admin_print_styles()
-	{
-		// Note: This function can be removed if not used
-		wp_register_style('acf-input-field_selector', $this->settings['dir'] . 'css/input.css', array('acf-input'), $this->settings['version']);
 		// styles
 		wp_enqueue_style(array(
 			'acf-input-field_selector',
@@ -507,24 +438,24 @@ class acf_field_field_selector extends acf_Field
 
 
 
-	/*--------------------------------------------------------------------------------------
+	/*
+	*  format_value_for_api()
 	*
-	*	get_value_for_api
-	*	- called from your template file when using the API functions (get_field, etc).
-	*	This function is useful if your field needs to format the returned value
+	*  This filter is appied to the $value after it is loaded from the db and before it is passed back to the api functions such as the_field
 	*
-	*	@params
-	*	- $post_id (int) - the post ID which your value is attached to
-	*	- $field (array) - the field object.
+	*  @type	filter
+	*  @since	3.6
+	*  @date	23/01/13
 	*
-	*	@author Elliot Condon
-	*	@since 3.0.0
+	*  @param	$value	- the value which was loaded from the database
+	*  @param	$post_id - the $post_id from which the value was loaded
+	*  @param	$field	- the field array holding all the field options
 	*
-	*-------------------------------------------------------------------------------------*/
+	*  @return	$value	- the modified value
+	*/
 
-	function get_value_for_api($post_id, $field)
+	function format_value_for_api($value, $post_id, $field)
 	{
-		$value = get_field( $field['key'], $post_id  );
 		if( !empty( $value ) ) {
 			if( $field['return_value'] == 'object' ) {
 				foreach( $value as $key => $item ) {
@@ -539,13 +470,29 @@ class acf_field_field_selector extends acf_Field
 				}
 			}
 		}
-		
+
 
 		return $value;
-
 	}
 
-	function update_value($post_id, $field, $value)
+
+
+	/*
+	*  update_field()
+	*
+	*  This filter is appied to the $field before it is saved to the database
+	*
+	*  @type	filter
+	*  @since	3.6
+	*  @date	23/01/13
+	*
+	*  @param	$field - the field array holding all the field options
+	*  @param	$post_id - the field group ID (post_type = acf)
+	*
+	*  @return	$field - the modified field
+	*/
+
+	function update_field($field, $post_id)
 	{
 		$field['allowed_types'] = explode( "\n", $field['allowed_types'] );
 		$field['allowed_types'] = array_map( 'trim', $field['allowed_types'] );
@@ -558,6 +505,11 @@ class acf_field_field_selector extends acf_Field
 		return $field;
 	}
 
+
 }
+
+
+// create field
+new acf_field_field_selector();
 
 ?>
