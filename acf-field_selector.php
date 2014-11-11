@@ -4,7 +4,7 @@
 Plugin Name: Advanced Custom Fields: Field Selector
 Plugin URI: https://github.com/danielpataki/acf-field_selector_field
 Description: This plugin will let you create an input field for selecting one or more custom fields.
-Version: 1.0.0
+Version: 3.0
 Author: Daniel Pataki
 Author URI: http://danielpataki.com
 License: GPLv2 or later
