@@ -1,10 +1,86 @@
 (function($){
 
-
 	function initialize_field( $el ) {
 
 		//$el.doStuff();
 
+	}
+
+	function add_to_selected_list( key, $field ) {
+		var current = $field.val();
+		var values = [];
+
+		if( current === '' || typeof current === 'undefined' || current === null || current === '{}' ) {
+			values.push( key );
+		}
+		else {
+			var values = $.parseJSON( current );
+			values.push( key )
+		}
+
+		values = JSON.stringify( values );
+		$field.val( values );
+
+	}
+
+	function sort_selected( $multiselect ) {
+		var $selected = $multiselect.find( '.selected.field li' );
+		var $input_field = $multiselect.find( '#field-value' );
+
+		values = [];
+		if( $selected.length > 0 ) {
+			$.each( $selected, function() {
+				values.push( $(this).data('key') );
+			})
+		}
+
+		values = JSON.stringify( values );
+		$input_field.val( values );
+
+	}
+
+	function add_to_list_ui( $item, $list, $other_list ) {
+		$item.appendTo( $list );
+	}
+
+	function order_list( $list ) {
+		var list_array = [];
+		$.each( $list.find('li'), function() {
+			list_array.push( $(this).data('search_term') );
+		})
+		list_array.sort();
+
+		$.each( list_array, function() {
+			$list.append( $list.find("li[data-search_term='" + this + "']") );
+		})
+
+	}
+
+	function remove_from_selected_list( key, $field ) {
+		var current = $.parseJSON( $field.val() );
+
+		current = $.grep( current, function(value) {
+		  return value != key;
+		});
+
+		values = JSON.stringify( current );
+		if( values === '[]' ) {
+			values = '';
+		}
+		$field.val( values );
+
+	}
+
+	function get_field_search_elements( query, $selectable ) {
+		var toShow = $();
+		$.each( $selectable.find('li'), function() {
+			if( $(this).data('search_term').indexOf( query ) > -1 ) {
+				var $element = $( 'li[data-key="' + $(this).data('key') + '"]' );
+				toShow = toShow.add( $element );
+			}
+		});
+
+		return toShow;
 	}
 
 
@@ -30,290 +106,63 @@
 			acf.get_fields({ type : 'field_selector'}, $el).each(function(){
 
 				initialize_field( $(this) );
-	acf.fields.field_selector = {
-		$el : null,
-		$input : null,
-		$left : null,
-		$right : null,
-		$data : null,
 
-		o : {},
+				var $this = $(this);
+
+    			$(this).find('.selected.field').sortable({
+					axis: 'y',
+					containerment: 'parent',
+					cursor: 'move',
+					items: 'li',
+					helper: 'clone',
+					placeholder: 'sortable-placeholder',
+					forcePlaceholderSize: true,
+					opacity: 0.5,
+					revert: 100,
+					stop: function() {
+						sort_selected( $this );
+					}
+
+				});
+    			$(this).find('.selected').disableSelection();
+
+
+				$( document ).on( 'click', '.multiselector .selectable li', function() {
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selected = $multiselector.find( '.selected ul' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+					var $input_field = $multiselector.find( '#field-value' );
+					var key = $(this).data('key');
+
+					add_to_list_ui( $(this), $selected, $selectable );
+					add_to_selected_list( key, $input_field );
+				})
+
+				$( document ).on( 'click', '.multiselector .selected li', function() {
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+					var $selected = $multiselector.find( '.selected ul' );
+					var $input_field = $multiselector.find( '#field-value' );
+					var key = $(this).data('key');
+
+					add_to_list_ui( $(this), $selectable, $selected );
+					order_list( $selectable );
+					remove_from_selected_list( key, $input_field );
+				})
+
+				$( document ).on( 'keyup', '.multiselector #field-search', function() {
+					var query = $(this).val();
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+
+					var $search_elements = get_field_search_elements( query, $selectable );
+
+					$selectable.find('li').hide();
+					$search_elements.show();
+
+				})
 
-		timeout : null,
 
-		set : function( o ){
-			// merge in new option
-			$.extend( this, o );
-			// find elements
-			this.$input = this.$el.children('input[type="hidden"]');
-			this.$left = this.$el.find('.acffs-autocomplete-left'),
-			this.$right = this.$el.find('.acffs-autocomplete-right');
-
-
-			var data = []
-			var items = this.$left.find( '.acffs-autocomplete-list > li > a' );
-			$.each( items, function() {
-				data.push( $(this).data('name') );
-			})
-
-			this.$data = data;
-
-			// return this for chaining
-			return this;
-
-		},
-		init : function(){
-
-			// reference
-			var _this = this;
-
-
-			// is clone field?
-			if( acf.helpers.is_clone_field(this.$input) )
-			{
-				return;
-			}
-
-
-			// set height of right column
-			this.$right.find('.acffs-autocomplete-list').height( this.$left.height() -2 );
-
-
-			// right sortable
-			this.$right.find('.acffs-autocomplete-list').sortable({
-				axis					:	'y',
-				items					:	'> li',
-				forceHelperSize			:	true,
-				forcePlaceholderSize	:	true,
-				scroll					:	true,
-				update					:	function(){
-
-					_this.$input.trigger('change');
-
-				}
-			});
-
-		},
-		render : function( json ){
-
-			// reference
-			var _this = this;
-
-
-			// update classes
-			this.$el.removeClass('no-results').removeClass('loading');
-
-
-			// new search?
-			if( this.o.paged == 1 )
-			{
-				this.$el.find('.acffs-autocomplete-left li:not(.load-more)').remove();
-			}
-
-
-			// no results?
-			if( ! json || ! json.html )
-			{
-				this.$el.addClass('no-results');
-				return;
-			}
-
-
-			// append new results
-			this.$el.find('.acffs-autocomplete-left .load-more').before( json.html );
-
-
-			// next page?
-			if( ! json.next_page_exists )
-			{
-				this.$el.addClass('no-results');
-			}
-
-
-			// apply .hide to left li's
-			this.$left.find('a').each(function(){
-
-				var id = $(this).attr('data-value');
-
-				if( _this.$right.find('a[data-value="' + id + '"]').exists() )
-				{
-					$(this).parent().addClass('hide');
-				}
-
-			});
-
-		},
-		add : function( $a ){
-
-			// vars
-			var id = $a.attr('data-value'),
-				title = $a.html();
-
-			// max posts
-			if( this.o.max != '' && this.o.max != null && typeof this.o.max != 'undefined' ) {
-			if( this.$right.find('a').length >= this.o.max )
-			{
-				alert( acf.l10n.field_selector.max.replace('{max}', this.o.max) );
-				return false;
-			}
-			}
-
-			// can be added?
-			if( $a.parent().hasClass('hide') )
-			{
-				return false;
-			}
-
-
-			// hide
-			$a.parent().addClass('hide');
-
-
-			// template
-			var data = {
-					value		:	$a.attr('data-value'),
-					title		:	$a.html(),
-					name		:	this.$input.attr('name')
-				},
-				tmpl = _.template(acf.l10n.field_selector.tmpl_li, data);
-
-
-			// add new li
-			console.log(this.$right);
-			this.$right.find('.acffs-autocomplete-list').append( tmpl )
-
-
-			// trigger change on new_li
-			this.$input.trigger('change');
-
-
-			// validation
-			this.$el.closest('.field').removeClass('error');
-
-
-		},
-		remove : function( $a ){
-
-			// remove
-			$a.parent().remove();
-
-
-			// show
-			this.$left.find('a[data-value="' + $a.attr('data-value') + '"]').parent('li').removeClass('hide');
-
-
-			// trigger change on new_li
-			this.$input.trigger('change');
-
-		},
-		filter : function( value ){
-			// reference
-
-			var _this = this,
-				$el = this.$el,
-				$data = _this.$data,
-				indexes = [];
-
-				value = value.toLowerCase();
-
-			$.each( $data, function( i, item ) {
-				item = item.toLowerCase();
-				if( item.indexOf( value ) != -1 ) {
-					indexes.push( i )
-				}
-			})
-
-			var list = this.$left.find( '.acffs-autocomplete-list > li' );
-			var elements = list.filter(function(i) {
-			    return $.inArray(i, indexes) > -1;
-			});
-
-			list.hide();
-			elements.show();
-
-		},
-
-	};
-
-	/*
-	*  acf/setup_fields
-	*
-	*  run init function on all elements for this field
-	*
-	*  @type	event
-	*  @date	20/07/13
-	*
-	*  @param	{object}	e		event object
-	*  @param	{object}	el		DOM object which may contain new ACF elements
-	*  @return	N/A
-	*/
-
-	$(document).on('acf/setup_fields', function(e, el){
-		$(el).find('.acffs-autocomplete-container').each(function(){
-
-			acf.fields.field_selector.set({ $el : $(this) }).init();
-
-		});
-
-	});
-
-
-	/*
-	*  Events
-	*
-	*  jQuery events for this field
-	*
-	*  @type	function
-	*  @date	1/03/2011
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-
-	$(document).on('click', '.acffs-autocomplete-container .acffs-autocomplete-left .acffs-autocomplete-list a', function( e ){
-
-		e.preventDefault();
-
-		acf.fields.field_selector.set({ $el : $(this).closest('.acffs-autocomplete-container') }).add( $(this) );
-
-		$(this).blur();
-
-	});
-
-	$(document).on('click', '.acffs-autocomplete-container .acffs-autocomplete-right .acffs-autocomplete-list a', function( e ){
-
-		e.preventDefault();
-
-		acf.fields.field_selector.set({ $el : $(this).closest('.acffs-autocomplete-container') }).remove( $(this) );
-
-		$(this).blur();
-
-	});
-
-	$(document).on('keyup', '.acffs-autocomplete-container input.acffs-autocomplete-search', function( e ){
-		// vars
-		var val = $(this).val(),
-			$el = $(this).closest('.acffs-autocomplete-container');
-	    acf.fields.field_selector.set({ $el : $el }).filter( val );
-
-	});
-
-	$(document).on('keypress', '.acffs-autocomplete-container input.acffs-autocomplete-search', function( e ){
-
-		// don't submit form
-		if( e.which == 13 )
-		{
-			e.preventDefault();
-		}
-
-	});
-
-	$(document).on( 'click', '.acf-tab-button', function() {
-		$.each( $( '.acf_postbox .field .acffs-autocomplete-container' ), function() {
-			$(this).find('.acffs-autocomplete-right .acffs-autocomplete-list').height( $(this).find('.acffs-autocomplete-left').height() - 1 )
-		})
-	})
 
 			});
 
@@ -343,293 +192,61 @@
 			$(postbox).find('.field[data-field_type="field_selector"]').each(function(){
 
 				initialize_field( $(this) );
-	acf.fields.field_selector = {
-		$el : null,
-		$input : null,
-		$left : null,
-		$right : null,
-		$data : null,
 
-		o : {},
-
-		timeout : null,
-
-		set : function( o ){
-			// merge in new option
-			$.extend( this, o );
-			// find elements
-			this.$input = this.$el.children('input[type="hidden"]');
-			this.$left = this.$el.find('.acffs-autocomplete-left'),
-			this.$right = this.$el.find('.acffs-autocomplete-right');
-
-			// get options
-			this.o = acf.helpers.get_atts( this.$el );
-
-			var data = []
-			var items = this.$left.find( '.acffs-autocomplete-list > li > a' );
-			$.each( items, function() {
-				data.push( $(this).data('name') );
-			})
-
-			this.$data = data;
-
-			// return this for chaining
-			return this;
-
-		},
-		init : function(){
-
-			// reference
-			var _this = this;
-
-
-			// is clone field?
-			if( acf.helpers.is_clone_field(this.$input) )
-			{
-				return;
-			}
-
-
-			// set height of right column
-			this.$right.find('.acffs-autocomplete-list').height( this.$left.height() -2 );
-
-
-			// right sortable
-			this.$right.find('.acffs-autocomplete-list').sortable({
-				axis					:	'y',
-				items					:	'> li',
-				forceHelperSize			:	true,
-				forcePlaceholderSize	:	true,
-				scroll					:	true,
-				update					:	function(){
-
-					_this.$input.trigger('change');
-
-				}
-			});
-
-		},
-		render : function( json ){
-
-			// reference
-			var _this = this;
-
-
-			// update classes
-			this.$el.removeClass('no-results').removeClass('loading');
-
-
-			// new search?
-			if( this.o.paged == 1 )
-			{
-				this.$el.find('.acffs-autocomplete-left li:not(.load-more)').remove();
-			}
-
-
-			// no results?
-			if( ! json || ! json.html )
-			{
-				this.$el.addClass('no-results');
-				return;
-			}
-
-
-			// append new results
-			this.$el.find('.acffs-autocomplete-left .load-more').before( json.html );
-
-
-			// next page?
-			if( ! json.next_page_exists )
-			{
-				this.$el.addClass('no-results');
-			}
-
-
-			// apply .hide to left li's
-			this.$left.find('a').each(function(){
-
-				var id = $(this).attr('data-value');
-
-				if( _this.$right.find('a[data-value="' + id + '"]').exists() )
-				{
-					$(this).parent().addClass('hide');
-				}
-
-			});
-
-		},
-		add : function( $a ){
-
-			// vars
-			var id = $a.attr('data-value'),
-				title = $a.html();
-
-			// max posts
-			if( this.o.max != '' && this.o.max != null && typeof this.o.max != 'undefined' ) {
-			if( this.$right.find('a').length >= this.o.max )
-			{
-				alert( acf.l10n.field_selector.max.replace('{max}', this.o.max) );
-				return false;
-			}
-			}
-
-			// can be added?
-			if( $a.parent().hasClass('hide') )
-			{
-				return false;
-			}
-
-
-			// hide
-			$a.parent().addClass('hide');
-
-
-			// template
-			var data = {
-					value		:	$a.attr('data-value'),
-					title		:	$a.html(),
-					name		:	this.$input.attr('name')
-				},
-				tmpl = _.template(acf.l10n.field_selector.tmpl_li, data);
-
-
-			// add new li
-			console.log(this.$right);
-			this.$right.find('.acffs-autocomplete-list').append( tmpl )
-
-
-			// trigger change on new_li
-			this.$input.trigger('change');
-
-
-			// validation
-			this.$el.closest('.field').removeClass('error');
-
-
-		},
-		remove : function( $a ){
-
-			// remove
-			$a.parent().remove();
-
-
-			// show
-			this.$left.find('a[data-value="' + $a.attr('data-value') + '"]').parent('li').removeClass('hide');
-
-
-			// trigger change on new_li
-			this.$input.trigger('change');
-
-		},
-		filter : function( value ){
-			// reference
-
-			var _this = this,
-				$el = this.$el,
-				$data = _this.$data,
-				indexes = [];
-
-				value = value.toLowerCase();
-
-			$.each( $data, function( i, item ) {
-				item = item.toLowerCase();
-				if( item.indexOf( value ) != -1 ) {
-					indexes.push( i )
-				}
-			})
-
-			var list = this.$left.find( '.acffs-autocomplete-list > li' );
-			var elements = list.filter(function(i) {
-			    return $.inArray(i, indexes) > -1;
-			});
-
-			list.hide();
-			elements.show();
-
-		},
-
-	};
-
-	/*
-	*  acf/setup_fields
-	*
-	*  run init function on all elements for this field
-	*
-	*  @type	event
-	*  @date	20/07/13
-	*
-	*  @param	{object}	e		event object
-	*  @param	{object}	el		DOM object which may contain new ACF elements
-	*  @return	N/A
-	*/
-
-	$(document).on('acf/setup_fields', function(e, el){
-		$(el).find('.acffs-autocomplete-container').each(function(){
-
-			acf.fields.field_selector.set({ $el : $(this) }).init();
-
-		});
-
-	});
-
-
-	/*
-	*  Events
-	*
-	*  jQuery events for this field
-	*
-	*  @type	function
-	*  @date	1/03/2011
-	*
-	*  @param	N/A
-	*  @return	N/A
-	*/
-
-
-	$(document).on('click', '.acffs-autocomplete-container .acffs-autocomplete-left .acffs-autocomplete-list a', function( e ){
-
-		e.preventDefault();
-
-		acf.fields.field_selector.set({ $el : $(this).closest('.acffs-autocomplete-container') }).add( $(this) );
-
-		$(this).blur();
-
-	});
-
-	$(document).on('click', '.acffs-autocomplete-container .acffs-autocomplete-right .acffs-autocomplete-list a', function( e ){
-
-		e.preventDefault();
-
-		acf.fields.field_selector.set({ $el : $(this).closest('.acffs-autocomplete-container') }).remove( $(this) );
-
-		$(this).blur();
-
-	});
-
-	$(document).on('keyup', '.acffs-autocomplete-container input.acffs-autocomplete-search', function( e ){
-		// vars
-		var val = $(this).val(),
-			$el = $(this).closest('.acffs-autocomplete-container');
-	    acf.fields.field_selector.set({ $el : $el }).filter( val );
-
-	});
-
-	$(document).on('keypress', '.acffs-autocomplete-container input.acffs-autocomplete-search', function( e ){
-
-		// don't submit form
-		if( e.which == 13 )
-		{
-			e.preventDefault();
-		}
-
-	});
-
-	$(document).on( 'click', '.acf-tab-button', function() {
-		$.each( $( '.acf_postbox .field .acffs-autocomplete-container' ), function() {
-			$(this).find('.acffs-autocomplete-right .acffs-autocomplete-list').height( $(this).find('.acffs-autocomplete-left').height() - 1 )
-		})
-	})
-
+				var $this = $(this);
+
+    			$(this).find('.selected.field').sortable({
+					axis: 'y',
+					containerment: 'parent',
+					cursor: 'move',
+					items: 'li',
+					helper: 'clone',
+					placeholder: 'sortable-placeholder',
+					forcePlaceholderSize: true,
+					opacity: 0.5,
+					revert: 100,
+					stop: function() {
+						sort_selected( $this );
+					}
+
+				});
+    			$(this).find('.selected').disableSelection();
+
+
+				$( document ).on( 'click', '.multiselector .selectable li', function() {
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selected = $multiselector.find( '.selected ul' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+					var $input_field = $multiselector.find( '#field-value' );
+					var key = $(this).data('key');
+
+					add_to_list_ui( $(this), $selected, $selectable );
+					add_to_selected_list( key, $input_field );
+				})
+
+				$( document ).on( 'click', '.multiselector .selected li', function() {
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+					var $selected = $multiselector.find( '.selected ul' );
+					var $input_field = $multiselector.find( '#field-value' );
+					var key = $(this).data('key');
+
+					add_to_list_ui( $(this), $selectable, $selected );
+					order_list( $selectable );
+					remove_from_selected_list( key, $input_field );
+				})
+
+				$( document ).on( 'keyup', '.multiselector #field-search', function() {
+					var query = $(this).val();
+					var $multiselector = $(this).parents( '.multiselector' );
+					var $selectable = $multiselector.find( '.selectable ul' );
+
+					var $search_elements = get_field_search_elements( query, $selectable );
+
+					$selectable.find('li').hide();
+					$search_elements.show();
+
+				})
 
 
 			});

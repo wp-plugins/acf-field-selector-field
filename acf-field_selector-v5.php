@@ -19,31 +19,20 @@ class acf_field_field_selector extends acf_field {
 	function __construct() {
 
 		$this->name = 'field_selector';
-		$this->label = __('Field Selector', 'acf');
-		$this->category = __("Relational",'acf'); // Basic, Content, Choice, etc
+		$this->label = __('Field Selector', 'acf-field_selector');
+		$this->category = __("Choice",'acf');
 		$this->defaults = array(
-			'allowed_groups'     => '',
-			'allowed_types'      => '',
-			'exclude_types'      => '',
-			'max'                => '',
-			'return_value'       => 'key',
-			'field_type'         => 'autocomplete',
-			'additional_fields'  => '',
+			'group_filtering' => 'include',
+			'groups' => '',
+			'type_filtering'  => 'include',
+			'types'  => ''
 		);
+		$this->common = new acf_field_field_selector_common();
 
+    	parent::__construct();
 
-		// do not delete!
-		parent::__construct();
-
-		$this->l10n = array(
-			'max'		=> __("Maximum fields reached ( {max} fields )",'acf'),
-			'tmpl_li'	=> '
-				<li>
-					<a href="#" data-name="<%= name %>" data-value="<%= value %>"><%= title %><span class="acf-button-remove"></span></a>
-					<input type="hidden" name="<%= name %>[]" value="<%= value %>" />
-				</li>
-			'
-		);
+		add_filter( 'acffsf/item_filters', array( 'acf_field_field_selector_common', 'type_filter' ), 10, 2 );
+		add_filter( 'acffsf/item_filters', array( 'acf_field_field_selector_common', 'group_filter' ), 10, 2 );
 
 	}
 
@@ -63,60 +52,58 @@ class acf_field_field_selector extends acf_field {
 
 	function render_field_settings( $field ) {
 
-		acf_render_field_setting( $field, array(
-			'label'			=> __('Display Type','acf-field_selector'),
-			'type'			=> 'select',
-			'name'			=> 'field_type',
-			'choices' => array(
-				__( 'Multiple Values', 'acf' ) => array(
-					'autocomplete' => __( 'Autocomplete', 'acf' ),
-					'checkbox' => __( 'Checkbox', 'acf' ),
-					'multi_select' => __( 'Multi Select', 'acf' )
-				),
-				__( 'Single Value', 'acf' ) => array(
-					'radio' => __( 'Radio Buttons', 'acf' ),
-					'select' => __( 'Select', 'acf' )
-				)
-			)
-		));
+		$field = array_merge($this->defaults, $field);
+		if( !empty( $field['types'] ) ) {
+			$field['types'] = implode(',', $field['types']);
+		}
+		else {
+			$field['types'] = '';
+		}
+
+		if( !empty( $field['groups'] ) ) {
+			$field['groups'] = implode(',', $field['groups']);
+		}
+		else {
+			$field['groups'] = '';
+		}
+
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Return Value','acf-field_selector'),
+			'label'			=> __('Group Filtering','acf-field_selector'),
+			'instructions'	=> __('Set how the given groups are used','acf-field_selector'),
 			'type'			=> 'radio',
-			'name'			=> 'return_value',
-			'choices' => array(
-				'key' => __( 'Field Key', 'acf' ),
-				'name' => __( 'Field Name', 'acf' ),
-				'object' => __( 'Field Object', 'acf' ),
-			)
+			'name'			=> 'group_filtering',
+			'layout'	=>	'horizontal',
+			'choices'	=>	array(
+				'include' => __('Include'),
+				'exclude' => __('Exclude'),
+			),
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Maximum items','acf-field_selector'),
-			'type'			=> 'number',
-			'name'			=> 'max',
+			'label'			=> __('Groups','acf-field_selector'),
+			'instructions'	=> __('Set the ID of groups to include or exclude','acf-field_selector'),
+			'type'			=> 'text',
+			'name'			=> 'groups',
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Allowed Field Types','acf-field_selector'),
-			'instructions'	=> __('Leave empty to allow all, otherwise one type per row','acf-field_selector'),
-			'type'			=> 'textarea',
-			'name'			=> 'allowed_types',
+			'label'			=> __('Type Filtering','acf-field_selector'),
+			'instructions'	=> __('Set how the given types are used','acf-field_selector'),
+			'type'			=> 'radio',
+			'name'			=> 'type_filtering',
+			'layout'	=>	'horizontal',
+			'choices'	=>	array(
+				'include' => __('Include'),
+				'exclude' => __('Exclude'),
+			),
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Excluded Field Types','acf-field_selector'),
-			'instructions'	=> __('Set field types to exclude specifically, one per row','acf-field_selector'),
-			'type'			=> 'textarea',
-			'name'			=> 'exclude_types',
-		));
-
-		acf_render_field_setting( $field, array(
-			'label'			=> __('Allowed Field Groups','acf-field_selector'),
-			'type'			=> 'select',
-			'multiple'      => true,
-			'name'			=> 'allowed_groups',
-			'choices'       => $this->get_field_group_array()
+			'label'			=> __('Types','acf-field_selector'),
+			'instructions'	=> __('Set the types to include or exclude','acf-field_selector'),
+			'type'			=> 'text',
+			'name'			=> 'types',
 		));
 
 
@@ -140,179 +127,35 @@ class acf_field_field_selector extends acf_field {
 	*/
 
 	function render_field( $field ) {
-		$field['allowed_types'] = explode( "\n", $field['allowed_types'] );
-		$field['exclude_types'] = explode( "\n", $field['exclude_types'] );
-
-		$args = array(
-			'post_type' => 'acf',
-			'posts_per_page' => -1
-		);
-
-		if( !empty( $field['allowed_groups'] ) ) {
-			$args['include'] = $field['allowed_groups'];
-		}
-
-		$field_groups = get_posts( $args );
-
-		$fields = array();
-		if( !empty( $field_groups ) ) {
-			foreach( $field_groups as $field_group ) {
-				$custom_fields = get_post_meta( $field_group->ID );
-				foreach( $custom_fields as $key => $customfield ) {
-					if( substr_count( $key, 'field_' ) > 0 ) {
-						$customfield = get_post_meta( $field_group->ID, $key, true );
-						$fields[$customfield['label']] = array(
-							'group' => $field_group->post_title,
-							'field' => $customfield
-						);
-					}
-				}
-			}
-			ksort($fields);
-		}
-
-
-		foreach( $fields as $name => $data ) {
-			if( !empty( $field['allowed_types'] ) && !in_array( $data['field']['type'], $field['allowed_types'] ) ) {
-				unset( $fields[$name] );
-			}
-			if( !empty( $field['exclude_types'] ) && in_array( $data['field']['type'], $field['exclude_types'] ) ) {
-				unset( $fields[$name] );
-			}
-		}
 
 
 		?>
-		<div>
-
-		<?php
-
-			$multiselect = ( $field['field_type'] == 'multi_select' ) ? 'multiple="multiple"' : '';
-
-			$fields_by_group = array();
-			foreach( $fields as $name => $data ) {
-				$fields_by_group[$data['group']][] = $data['field'];
-			}
-
-			$fields_by_key = array();
-			foreach( $fields as $name => $data ) {
-				$fields_by_key[$data['field']['key']]['field'] = $data['field'];
-				$fields_by_key[$data['field']['key']]['group'] = $data['group'];
-			}
-
-			switch ( $field['field_type'] ) {
-				case 'select' :
-				case 'multi_select' :
-					echo "<select " . $multiselect . " name='" . $field['name'] . "[]'>";
-					foreach( $fields_by_group as $name => $group ) {
-						echo '<optgroup label="' . $name . '">';
-						foreach( $group as $item ) {
-							echo '<option ' . selected( $field['value'][0], $item['key'] , false ) . ' value="' . $item['key'] . '">' . $item['label'] . '</value>';
-						}
-						echo '</optgroup>';
-					}
-					echo '</select>';
-					break;
-				case 'radio' :
-					echo '<ul class="acf-radio-list radio vertical acffs-option-group-list">';
-					foreach( $fields_by_group as $name => $group ) {
-						echo '<li><span class="acffs-option-group-label">' . $name . '</span><ul>';
-						foreach( $group as $item ) {
-							echo '<li><label><input ' . checked( $field['value'], $item['key'] , false ) . ' type="radio" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
-						}
-						echo '</ul></li>';
-					}
-					echo '</ul>';
-					break;
-				case 'checkbox' :
-					echo '<ul class="acf-checkbox-list checkbox vertical acffs-option-group-list">';
-					foreach( $fields_by_group as $name => $group ) {
-						echo '<li><span class="acffs-option-group-label">' . $name . '</span><ul>';
-						foreach( $group as $item ) {
-							echo '<li><label><input ' . checked( $field['value'], $item['key'] , false ) . ' type="checkbox" name="' . $field['name'] . '[]" value="' . $item['key'] . '">' . $item['label'] . '</label></li>';
-						}
-						echo '</ul></li>';
-					}
-					echo '</ul>';
-					break;
-				case 'autocomplete' :
-				default :
-
-					$attributes = array(
-						'max' => $field['max'],
-						's' => '',
-						'field_key' => $field['key']
-					);
-
-				?>
-				<div class="acffs-autocomplete-container" <?php foreach( $attributes as $k => $v ): ?> data-<?php echo $k; ?>="<?php echo $v; ?>"<?php endforeach; ?>>
-					<input type="hidden" name="<?php echo $field['name']; ?>" value="" />
-
-				<!-- Left List -->
-				<div class="acffs-autocomplete-left">
-					<table class="widefat">
-						<thead>
-							<tr>
-								<th>
-									<input class="acffs-autocomplete-search" placeholder="<?php _e("Search...",'acf'); ?>" type="text" id="custom_field_selector_<?php echo $field['name']; ?>" />
-								</th>
-							</tr>
-						</thead>
-					</table>
-					<ul class="bl acffs-autocomplete-list">
-						<?php
-							if( !empty( $fields ) ) :
-								foreach( $fields as $customfield ) :
-								$hidden = ( !empty( $field['value'] ) && is_array( $field['value'] ) && in_array( $customfield['field']['key'], $field['value'] ) ) ? 'class="hide"' : '';
-							?>
-						<li <?php echo $hidden ?>>
-							<a href="#" data-name="<?php echo $customfield['field']['label'] ?> <?php echo $customfield['group'] ?>" data-value="<?php echo $customfield['field']['key'] ?>"><?php echo $customfield['field']['label'] ?> <span class='additional-data'><?php echo $customfield['group'] ?></span> <span class="acf-button-add"></span></a>
-						</li>
-						<?php endforeach; endif ?>
-
-					</ul>
-				</div>
-				<!-- /Left List -->
-
-				<!-- Right List -->
-				<div class="acffs-autocomplete-right">
-					<ul class="bl acffs-autocomplete-list">
+		<div class='multiselector'>
+			<div class='selectable-container field-container'>
+				<div class='title'><?php _e( 'Available Fields', 'acf-field_selector' ) ?></div>
+				<div class='search'><input type='text' id="field-search" placeholder='Type to search...'></div>
+				<div class='selectable field'>
 					<?php
-					if( !empty( $field['value'] ) && is_array( $field['value'] ) )
-					{
-						foreach( $field['value'] as $value )
-						{
-
-							if( !empty( $fields_by_key[$value] ) ) {
-
-							$customfield = $fields_by_key[$value];
-							echo '<li>
-								<a href="#" class="" data-name="' . $customfield['field']['label'] . '" data-value="' . $customfield['field']['key'] . '">' . $customfield['field']['label'] . '<span class="additional-data">' . $customfield['group'] .'</span> <span class="acf-button-remove"></span></a>
-								<input type="hidden" name="' . $field['name'] . '[]" value="' . $customfield['field']['key'] . '" />
-							</li>';
-
-							}
-
-
-						}
-					}
-
+					$selectable = $this->get_items( $field, $this->get_selectable_item_fields( $field ) );
+					$this->common->show_items( $selectable );
 					?>
-					</ul>
 				</div>
-
+			</div>
+			<div class='selected-container field-container'>
+				<div class='title'><?php _e( 'Selected Fields', 'acf-field_selector' ) ?></div>
+				<div class='message'><?php _e( 'Drag and drop to re-order your selection', 'acf-field_selector' ) ?></div>
+				<div class='selected field'>
+					<?php
+						$selected = $this->get_items( $field, $this->get_selected_item_fields( $field ), false );
+						$this->common->show_items( $selected );
+					?>
 				</div>
-				<!-- / Right List -->
-
-
-				<?php
-
-
-			}
-		?>
-
+			</div>
+			<input type='hidden' id='field-value' name='<?php echo esc_attr($field['name']) ?>' value="<?php echo esc_attr($field['value']) ?>">
 		</div>
 		<?php
+
+
 	}
 
 
@@ -329,74 +172,40 @@ class acf_field_field_selector extends acf_field {
 	*  @param	n/a
 	*  @return	n/a
 	*/
-
-
 	function input_admin_enqueue_scripts() {
 
 		$dir = plugin_dir_url( __FILE__ );
 
 
-		// register & include JS
-		wp_register_script( 'acf-input-field_selector', "{$dir}js/input.js" );
-		wp_enqueue_script('acf-input-field_selector');
+
+		// register ACF scripts
+		wp_register_script( 'acf-input-field_selector', $dir . 'js/input.js', array('acf-input'), $this->settings['version'] );
+		wp_register_style( 'acf-input-field_selector', $dir . 'css/input.css', array('acf-input'), $this->settings['version'] );
+
+		wp_enqueue_script( 'jquery-ui-sortable' );
 
 
-		// register & include CSS
-		wp_register_style( 'acf-input-field_selector', "{$dir}css/input.css" );
-		wp_enqueue_style('acf-input-field_selector');
+		// scripts
+		wp_enqueue_script(array(
+			'acf-input-field_selector',
+		));
+
+		// styles
+		wp_enqueue_style(array(
+			'acf-input-field_selector',
+		));
 
 
 	}
 
 
 
-	/*
-	*  format_value()
-	*
-	*  This filter is appied to the $value after it is loaded from the db and before it is returned to the template
-	*
-	*  @type	filter
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$value (mixed) the value which was loaded from the database
-	*  @param	$post_id (mixed) the $post_id from which the value was loaded
-	*  @param	$field (array) the field array holding all the field options
-	*
-	*  @return	$value (mixed) the modified value
-	*/
-
-
-
-	function format_value( $value, $post_id, $field ) {
-		if( !empty( $value ) ) {
-			if( $field['return_value'] == 'object' ) {
-				foreach( $value as $key => $item ) {
-					$value[$key] = get_field_object( $item );
-				}
-			}
-
-			if( $field['return_value'] == 'name' ) {
-				foreach( $value as $key => $item ) {
-					$field_object = get_field_object( $item );
-					$value[$key] = $field_object['name'];
-				}
-			}
-		}
-
-
-		return $value;
-	}
-
-
-
-
 
 
 	/*
-	*  load_field()
+	*  update_field()
 	*
-	*  This filter is applied to the $field after it is loaded from the database
+	*  This filter is applied to the $field before it is saved to the database
 	*
 	*  @type	filter
 	*  @date	23/01/2013
@@ -407,37 +216,99 @@ class acf_field_field_selector extends acf_field {
 	*/
 
 
+	function update_field( $field ) {
 
-	function load_field( $field ) {
-		if( !empty( $field['allowed_types'] ) && is_array( $field['allowed_types'] ) ) {
-			$field['allowed_types'] = implode( "\n", $field['allowed_types'] );
+		if( !empty( $field['types'] ) ) {
+			$field['types'] = array_map( 'trim', explode( ',', $field['types'] ) );
 		}
-		if( !empty( $field['exclude_types'] ) && is_array( $field['exclude_types'] ) ) {
-			$field['exclude_types'] = implode( "\n", $field['exclude_types'] );
+		else {
+			$field['types'] = array();
+		}
+
+		if( !empty( $field['groups'] ) ) {
+			$field['groups'] = array_map( 'trim', explode( ',', $field['groups'] ) );
+		}
+		else {
+			$field['groups'] = array();
 		}
 
 		return $field;
 
 	}
 
+	function sort_items_by_label($a, $b) {
+		return strcmp( $a["label"], $b["label"] );
+	}
 
+	function get_items( $field, $items, $sort = true ) {
+		$final_items = array();
+		if( !empty( $items ) ) {
+			foreach( $items as $item ) {
+				$item_value = get_field_object( $item->post_name );
 
+				$item_value['group'] = array(
+					'ID' => $item->post_parent,
+					'post_title' => get_the_title( $item->post_parent )
+				);
 
-	/*
-	*  Field Groups Array
-	*
-	*  Generates an array of all field groups
-	*
-	*/
-	function get_field_group_array() {
-		$field_groups = get_posts( array( 'post_type' => 'acf', 'posts_per_page' => -1 ) );
-		$groups = array();
+				$final_items[$item_value['key']] = $item_value;
+			}
 
-		foreach( $field_groups as $group ) {
-			$groups[$group->ID] = $group->post_title;
+			if( $sort == true ) {
+				usort($final_items, array( $this, 'sort_items_by_label' ) );
+			}
+
 		}
 
-		return $groups;
+		$final_items = apply_filters( 'acffsf/item_filters', $final_items, $field, $final_items );
+
+		return $final_items;
+
+	}
+
+	function get_selectable_item_fields( $field ) {
+		global $wpdb;
+
+		$field_keys = array();
+		$field_keys_query = 9999;
+
+		if( !empty( $field['value'] ) ) {
+			$field_keys = json_decode( $field['value'], true );
+			$field_keys_query = "'" . implode( "', '", $field_keys ) . "'";
+		}
+
+		$fields = $wpdb->get_results( "SELECT post_name, post_parent FROM $wpdb->posts WHERE post_parent IN (SELECT ID FROM $wpdb->posts WHERE post_type = 'acf-field-group' ) AND post_name NOT IN ( $field_keys_query ) " );
+
+
+		return $fields;
+
+	}
+
+	function get_selected_item_fields( $field ) {
+		global $wpdb;
+
+		$field_keys = array();
+		$field_keys_query = 9999;
+
+		if( !empty( $field['value'] ) ) {
+			$field_keys = json_decode( $field['value'], true );
+			$field_keys_query = "'" . implode( "', '", $field_keys ) . "'";
+		}
+
+		$fields = $wpdb->get_results( "SELECT post_name, post_parent FROM $wpdb->posts WHERE post_parent IN (SELECT ID FROM $wpdb->posts WHERE post_type = 'acf-field-group' ) AND post_name IN ( $field_keys_query ) " );
+
+		$sortable_fields = array();
+		foreach( $fields as $field ) {
+			$sortable_fields[$field->post_name] = $field;
+		}
+
+		$fields = array();
+		foreach( $field_keys as $key ) {
+			$fields[] = $sortable_fields[$key];
+		}
+
+		return $fields;
+
 	}
 
 
