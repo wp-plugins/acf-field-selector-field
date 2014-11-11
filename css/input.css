@@ -66,6 +66,12 @@
 	height: 150px;
 	border: #DFDFDF solid 1px;
 	border-top-width: 0;
+	margin:0px;
+}
+
+.acffs-autocomplete-right .acffs-autocomplete-list {
+	height:194px;
+	border-width:1px;
 }
 
 .acffs-autocomplete-container .acffs-autocomplete-list li.hide {
