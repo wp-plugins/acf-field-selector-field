@@ -236,6 +236,15 @@ class acf_field_field_selector extends acf_field {
 
 	}
 
+	function format_value( $value, $post_id, $field ) {
+		if( !empty( $value ) ) {
+			$value = json_decode( $value, true );
+		}
+
+		return $value;
+	}
+
+
 	function sort_items_by_label($a, $b) {
 		return strcmp( $a["label"], $b["label"] );
 	}

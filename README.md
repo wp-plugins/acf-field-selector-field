@@ -41,6 +41,7 @@ The first parameter is the list of items to modify, the second is the setting fi
 
 = 3.0.1 =
 * Made sure search is case-insensitive
+* Made sure value was json decoded when returned to the_field
 
 = 3.0 =
 * Complete rewrite with custom controls
