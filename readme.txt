@@ -46,6 +46,9 @@ The first parameter is the list of items to modify, the second is the setting fi
 
 == Changelog ==
 
+= 3.0.1 =
+* Made sure search is case-insensitive
+
 = 3.0 =
 * Complete rewrite with custom controls
 
