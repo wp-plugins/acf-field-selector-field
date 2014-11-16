@@ -74,7 +74,9 @@
 	function get_field_search_elements( query, $selectable ) {
 		var toShow = $();
 		$.each( $selectable.find('li'), function() {
-			if( $(this).data('search_term').indexOf( query ) > -1 ) {
+			var search_term = $(this).data('search_term').toLowerCase();
+			query = query.toLowerCase();
+			if( search_term.indexOf( query ) > -1 ) {
 				var $element = $( 'li[data-key="' + $(this).data('key') + '"]' );
 				toShow = toShow.add( $element );
 			}
