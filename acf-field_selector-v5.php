@@ -1,25 +1,41 @@
 <?php
+/**
+ * ACF 5 Field Class
+ *
+ * This file holds the class required for our field to work with ACF 5
+ *
+ * @author Daniel Pataki
+ * @since 4.0.0
+ *
+ */
+
+/**
+ * ACF 5 Role Selector Class
+ *
+ * The Field selector class enables users to select other fields from
+ * the ones created with ACF. This is the class that is used for ACF 4.
+ *
+ * @author Daniel Pataki
+ * @since 4.0.0
+ *
+ */
 
 class acf_field_field_selector extends acf_field {
 
 
-	/*
-	*  __construct
-	*
-	*  This function will setup the field type data
-	*
-	*  @type	function
-	*  @date	5/03/2014
-	*  @since	5.0.0
-	*
-	*  @param	n/a
-	*  @return	n/a
-	*/
-
+	/**
+	 * Field Constructor
+	 *
+	 * Sets basic properties and runs the parent constructor
+	 *
+	 * @author Daniel Pataki
+	 * @since 3.0.0
+	 *
+	 */
 	function __construct() {
 
 		$this->name = 'field_selector';
-		$this->label = __('Field Selector', 'acf-field_selector');
+		$this->label = __('Field Selector', 'acf-field-selector-field');
 		$this->category = __("Choice",'acf');
 		$this->defaults = array(
 			'group_filtering' => 'include',
@@ -27,29 +43,34 @@ class acf_field_field_selector extends acf_field {
 			'type_filtering'  => 'include',
 			'types'  => ''
 		);
-		$this->common = new acf_field_field_selector_common();
 
     	parent::__construct();
 
-		add_filter( 'acffsf/item_filters', array( 'acf_field_field_selector_common', 'type_filter' ), 10, 2 );
-		add_filter( 'acffsf/item_filters', array( 'acf_field_field_selector_common', 'group_filter' ), 10, 2 );
+		add_filter( 'acffsf/item_filters', 'acffsf_type_filter', 10, 2 );
+		add_filter( 'acffsf/item_filters', 'acffsf_group_filter', 10, 2 );
 
 	}
 
 
-	/*
-	*  render_field_settings()
-	*
-	*  Create extra settings for your field. These are visible when editing a field
-	*
-	*  @type	action
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$field (array) the $field being edited
-	*  @return	n/a
-	*/
-
+	/**
+	 * Field Options
+	 *
+	 * Creates the options for the field, they are shown when the user
+	 * creates a field in the back-end. Currently there are Two fields.
+	 *
+	 * The Group Filtering settings allow you to filter the fields shown to
+	 * the user based on their group. You can include or exclude groups
+	 * separated by commas.
+	 *
+	 * The Type Filtering settings allow you to filter the fields shown to
+	 * the user based on their type. You can include or exclude types
+	 * separated by commas.
+	 *
+	 * @param array $field The details of this field
+	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function render_field_settings( $field ) {
 
 		$field = array_merge($this->defaults, $field);
@@ -69,39 +90,39 @@ class acf_field_field_selector extends acf_field {
 
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Group Filtering','acf-field_selector'),
-			'instructions'	=> __('Set how the given groups are used','acf-field_selector'),
+			'label'			=> __('Group Filtering','acf-field-selector-field'),
+			'instructions'	=> __('Set how the given groups are used','acf-field-selector-field'),
 			'type'			=> 'radio',
 			'name'			=> 'group_filtering',
 			'layout'	=>	'horizontal',
 			'choices'	=>	array(
-				'include' => __('Include'),
-				'exclude' => __('Exclude'),
+				'include' => __('Include', 'acf-field-selector-field'),
+				'exclude' => __('Exclude', 'acf-field-selector-field'),
 			),
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Groups','acf-field_selector'),
-			'instructions'	=> __('Set the ID of groups to include or exclude','acf-field_selector'),
+			'label'			=> __('Groups','acf-field-selector-field'),
+			'instructions'	=> __('Set the ID of groups to include or exclude','acf-field-selector-field'),
 			'type'			=> 'text',
 			'name'			=> 'groups',
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Type Filtering','acf-field_selector'),
-			'instructions'	=> __('Set how the given types are used','acf-field_selector'),
+			'label'			=> __('Type Filtering','acf-field-selector-field'),
+			'instructions'	=> __('Set how the given types are used','acf-field-selector-field'),
 			'type'			=> 'radio',
 			'name'			=> 'type_filtering',
 			'layout'	=>	'horizontal',
 			'choices'	=>	array(
-				'include' => __('Include'),
-				'exclude' => __('Exclude'),
+				'include' => __('Include', 'acf-field-selector-field'),
+				'exclude' => __('Exclude', 'acf-field-selector-field'),
 			),
 		));
 
 		acf_render_field_setting( $field, array(
-			'label'			=> __('Types','acf-field_selector'),
-			'instructions'	=> __('Set the types to include or exclude','acf-field_selector'),
+			'label'			=> __('Types','acf-field-selector-field'),
+			'instructions'	=> __('Set the types to include or exclude','acf-field-selector-field'),
 			'type'			=> 'text',
 			'name'			=> 'types',
 		));
@@ -111,43 +132,39 @@ class acf_field_field_selector extends acf_field {
 
 
 
-	/*
-	*  render_field()
-	*
-	*  Create the HTML interface for your field
-	*
-	*  @param	$field (array) the $field being rendered
-	*
-	*  @type	action
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	$field (array) the $field being edited
-	*  @return	n/a
-	*/
-
+	/**
+	 * Field Display
+	 *
+	 * This function takes care of displaying our field to the users, taking
+	 * the field options into account.
+	 *
+	 * @param array $field The details of this field
+	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function render_field( $field ) {
 
 
 		?>
 		<div class='multiselector'>
 			<div class='selectable-container field-container'>
-				<div class='title'><?php _e( 'Available Fields', 'acf-field_selector' ) ?></div>
-				<div class='search'><input type='text' id="field-search" placeholder='Type to search...'></div>
+				<div class='title'><?php _e( 'Available Fields', 'acf-field-selector-field' ) ?></div>
+				<div class='search'><input type='text' id="field-search" placeholder='<?php _e( 'Type to search...', 'acf-field-selector-field') ?> '></div>
 				<div class='selectable field'>
 					<?php
 					$selectable = $this->get_items( $field, $this->get_selectable_item_fields( $field ) );
-					$this->common->show_items( $selectable );
+					acffsf_show_items( $selectable );
 					?>
 				</div>
 			</div>
 			<div class='selected-container field-container'>
-				<div class='title'><?php _e( 'Selected Fields', 'acf-field_selector' ) ?></div>
-				<div class='message'><?php _e( 'Drag and drop to re-order your selection', 'acf-field_selector' ) ?></div>
+				<div class='title'><?php _e( 'Selected Fields', 'acf-field-selector-field' ) ?></div>
+				<div class='message'><?php _e( 'Drag and drop to re-order your selection', 'acf-field-selector-field' ) ?></div>
 				<div class='selected field'>
 					<?php
 						$selected = $this->get_items( $field, $this->get_selected_item_fields( $field ), false );
-						$this->common->show_items( $selected );
+						acffsf_show_items( $selected );
 					?>
 				</div>
 			</div>
@@ -159,42 +176,25 @@ class acf_field_field_selector extends acf_field {
 	}
 
 
-	/*
-	*  input_admin_enqueue_scripts()
-	*
-	*  This action is called in the admin_enqueue_scripts action on the edit screen where your field is created.
-	*  Use this action to add CSS + JavaScript to assist your render_field() action.
-	*
-	*  @type	action (admin_enqueue_scripts)
-	*  @since	3.6
-	*  @date	23/01/13
-	*
-	*  @param	n/a
-	*  @return	n/a
-	*/
+	/**
+	 * Enqueue Assets
+	 *
+	 * This function enqueues the scripts and styles needed to display the
+	 * field
+	 *
+	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function input_admin_enqueue_scripts() {
 
 		$dir = plugin_dir_url( __FILE__ );
 
-
-
 		// register ACF scripts
-		wp_register_script( 'acf-input-field_selector', $dir . 'js/input.js', array('acf-input'), $this->settings['version'] );
-		wp_register_style( 'acf-input-field_selector', $dir . 'css/input.css', array('acf-input'), $this->settings['version'] );
+		wp_enqueue_script( 'acf-input-field_selector', $dir . 'js/input.js', array('acf-input'), $this->settings['version'] );
+		wp_enqueue_style( 'acf-input-field_selector', $dir . 'css/input.css', array('acf-input'), $this->settings['version'] );
 
 		wp_enqueue_script( 'jquery-ui-sortable' );
-
-
-		// scripts
-		wp_enqueue_script(array(
-			'acf-input-field_selector',
-		));
-
-		// styles
-		wp_enqueue_style(array(
-			'acf-input-field_selector',
-		));
-
 
 	}
 
@@ -202,20 +202,19 @@ class acf_field_field_selector extends acf_field {
 
 
 
-	/*
-	*  update_field()
-	*
-	*  This filter is applied to the $field before it is saved to the database
-	*
-	*  @type	filter
-	*  @date	23/01/2013
-	*  @since	3.6.0
-	*
-	*  @param	$field (array) the field array holding all the field options
-	*  @return	$field
-	*/
-
-
+	/**
+	 * Pre-Save Value Modification
+	 *
+	 * This filter is applied to the $value before it is updated in the db
+	 *
+	 * @param mixed $value The value which will be saved in the database
+	 * @param int $post_id The $post_id of which the value will be saved
+	 * @param array $field The field array holding all the field options
+	 * @return mixed The new value
+	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function update_field( $field ) {
 
 		if( !empty( $field['types'] ) ) {
@@ -236,6 +235,20 @@ class acf_field_field_selector extends acf_field {
 
 	}
 
+	/**
+	 * Format Value
+	 *
+	 * This filter is applied to the $value after it is loaded from the db and
+	 * before it is passed back to the API functions such as the_field
+	 *
+	 * @param mixed $value The value which was loaded from the database
+	 * @param int $post_id The $post_id from which the value was loaded
+	 * @param array $field The field array holding all the field options
+	 * @return mixed The new value
+	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function format_value( $value, $post_id, $field ) {
 		if( !empty( $value ) ) {
 			$value = json_decode( $value, true );
@@ -244,11 +257,19 @@ class acf_field_field_selector extends acf_field {
 		return $value;
 	}
 
-
-	function sort_items_by_label($a, $b) {
-		return strcmp( $a["label"], $b["label"] );
-	}
-
+	/**
+	 * Get Items
+	 *
+	 * Retrieves items to show for the dual pane viewer
+	 *
+	 * @param array $field The data of the current field
+	 * @param array $items Items to show
+	 * @param bool $sort Wether to sort or not
+	 * @return array Final list of items to show
+ 	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function get_items( $field, $items, $sort = true ) {
 		$final_items = array();
 		if( !empty( $items ) ) {
@@ -264,7 +285,7 @@ class acf_field_field_selector extends acf_field {
 			}
 
 			if( $sort == true ) {
-				usort($final_items, array( $this, 'sort_items_by_label' ) );
+				usort($final_items, 'acffsf_sort_items_by_label' );
 			}
 
 		}
@@ -275,6 +296,18 @@ class acf_field_field_selector extends acf_field {
 
 	}
 
+
+	/**
+	 * Get Selectable Items
+	 *
+	 * Retrieves a list of selectable fields
+	 *
+	 * @param array $field The data of the current field
+	 * @return array Final list of items
+ 	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function get_selectable_item_fields( $field ) {
 		global $wpdb;
 
@@ -293,6 +326,18 @@ class acf_field_field_selector extends acf_field {
 
 	}
 
+
+	/**
+	 * Get Selected items
+	 *
+	 * Gets the items the user has selected
+	 *
+	 * @param array $field The data of the current field
+	 * @return array Final list of items
+ 	 * @author Daniel Pataki
+	 * @since 4.0.0
+	 *
+	 */
 	function get_selected_item_fields( $field ) {
 		global $wpdb;
 
@@ -323,8 +368,6 @@ class acf_field_field_selector extends acf_field {
 
 }
 
-
-// create field
 new acf_field_field_selector();
 
 ?>
