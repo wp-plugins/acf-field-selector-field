@@ -20,6 +20,7 @@ This ACF field type is compatible with both *ACF 4* and *ACF 5*.
 = Thanks =
 
 * [Advanced Custom Fields](http://www.advancedcustomfields.com/) for the awesome base plugin.
+* [Alexei Ryazancev](https://www.iconfinder.com/GlumPix) for the plugin icon
 
 == Installation ==
 
